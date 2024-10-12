@@ -1,7 +1,7 @@
 
 # Codifying AI Governance
 
-This repository contains Azure Resource Manager (ARM) templates for deploying various Azure services with private endpoints. These templates provide locked down methods of deploying Azure OpenAI installations, ensuring secure and restricted access to the services. The templates are organized into different directories based on the services they configure.
+This repository contains Azure Resource Manager (ARM) templates for deploying various Azure AI services in end to end locked down scenarios. These templates provide locked down methods of deploying Azure OpenAI installations, ensuring secure and restricted access to the services. The templates are organized into different directories based on the services they configure.
 
 ## AITemplates
 
