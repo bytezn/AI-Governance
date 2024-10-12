@@ -1,0 +1,259 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "location": {
+        "type": "string",
+        "defaultValue": "EastUS",
+        "metadata": {
+          "description": "Location of the resources"
+        }
+      },
+      "subnetId": {
+        "type": "string",
+        "metadata": {
+          "description": "Subnet ID for private endpoints"
+        }
+      },
+      "openAiServiceName": {
+        "type": "string",
+        "defaultValue": "[concat('openai', uniqueString(resourceGroup().id))]",
+        "metadata": {
+          "description": "Name of the Azure OpenAI service"
+        }
+      },
+      "searchServiceName": {
+        "type": "string",
+        "defaultValue": "[concat('search', uniqueString(resourceGroup().id))]",
+        "metadata": {
+          "description": "Name of the Azure AI Search service"
+        }
+      },
+      "storageAccountName": {
+        "type": "string",
+        "defaultValue": "[concat('storage', uniqueString(resourceGroup().id))]",
+        "metadata": {
+          "description": "Name of the Storage Account"
+        }
+      },
+      "appServiceName": {
+        "type": "string",
+        "defaultValue": "[concat('appservice', uniqueString(resourceGroup().id))]",
+        "metadata": {
+          "description": "Name of the App Service"
+        }
+      },
+      "appServicePlanName": {
+        "type": "string",
+        "defaultValue": "[concat('appserviceplan', uniqueString(resourceGroup().id))]",
+        "metadata": {
+          "description": "Name of the App Service Plan"
+        }
+      },
+      "frontDoorName": {
+        "type": "string",
+        "defaultValue": "[concat('frontdoor', uniqueString(resourceGroup().id))]",
+        "metadata": {
+          "description": "Name of the Azure Front Door"
+        }
+      }
+    },
+    "resources": [
+      {
+        "type": "Microsoft.CognitiveServices/accounts",
+        "apiVersion": "2021-04-30",
+        "name": "[parameters('openAiServiceName')]",
+        "location": "[parameters('location')]",
+        "kind": "OpenAI",
+        "sku": {
+          "name": "S0"
+        },
+        "properties": {
+          "privateEndpointConnections": [
+            {
+              "subnet": {
+                "id": "[parameters('subnetId')]"
+              }
+            }
+          ],
+          "networkAcls": {
+            "defaultAction": "Deny",
+            "bypass": "None"
+          }
+        },
+        "tags": {
+          "Author": "Lawrance Reddy"
+        },
+        "dependsOn": []
+      },
+      {
+        "type": "Microsoft.Search/searchServices",
+        "apiVersion": "2020-08-01",
+        "name": "[parameters('searchServiceName')]",
+        "location": "[parameters('location')]",
+        "sku": {
+          "name": "basic"
+        },
+        "properties": {
+          "privateEndpointConnections": [
+            {
+              "subnet": {
+                "id": "[parameters('subnetId')]"
+              }
+            }
+          ],
+          "networkRuleSet": {
+            "defaultAction": "Deny",
+            "ipRules": [],
+            "virtualNetworkRules": [
+              {
+                "id": "[parameters('subnetId')]"
+              }
+            ]
+          }
+        },
+        "tags": {
+          "Author": "Lawrance Reddy"
+        },
+        "dependsOn": []
+      },
+      {
+        "type": "Microsoft.Storage/storageAccounts",
+        "apiVersion": "2021-04-01",
+        "name": "[parameters('storageAccountName')]",
+        "location": "[parameters('location')]",
+        "sku": {
+          "name": "Standard_LRS"
+        },
+        "kind": "StorageV2",
+        "properties": {
+          "privateEndpointConnections": [
+            {
+              "subnet": {
+                "id": "[parameters('subnetId')]"
+              }
+            }
+          ],
+          "networkAcls": {
+            "bypass": "None",
+            "defaultAction": "Deny",
+            "virtualNetworkRules": [
+              {
+                "id": "[parameters('subnetId')]"
+              }
+            ],
+            "ipRules": []
+          }
+        },
+        "tags": {
+          "Author": "Lawrance Reddy"
+        },
+        "dependsOn": []
+      },
+      {
+        "type": "Microsoft.Web/serverfarms",
+        "apiVersion": "2021-02-01",
+        "name": "[parameters('appServicePlanName')]",
+        "location": "[parameters('location')]",
+        "sku": {
+          "name": "P1v2",
+          "tier": "PremiumV2",
+          "capacity": 1
+        },
+        "properties": {
+          "reserved": false,
+          "perSiteScaling": false,
+          "elasticScaleEnabled": false
+        },
+        "dependsOn": []
+      },
+      {
+        "type": "Microsoft.Web/sites",
+        "apiVersion": "2021-02-01",
+        "name": "[parameters('appServiceName')]",
+        "location": "[parameters('location')]",
+        "properties": {
+          "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]",
+          "httpsOnly": true,
+          "privateEndpointConnections": [
+            {
+              "subnet": {
+                "id": "[parameters('subnetId')]"
+              }
+            }
+          ]
+        },
+        "tags": {
+          "Author": "Lawrance Reddy"
+        },
+        "dependsOn": [
+          "[resourceId('Microsoft.Web/serverfarms', parameters('appServicePlanName'))]"
+        ]
+      },
+      {
+        "type": "Microsoft.Cdn/profiles",
+        "apiVersion": "2021-01-01",
+        "name": "[parameters('frontDoorName')]",
+        "location": "Global",
+        "sku": {
+          "name": "Premium_AzureFrontDoor"
+        },
+        "properties": {
+          "loadBalancingSettings": {
+            "sampleSize": 4,
+            "successfulSamplesRequired": 2
+          },
+          "enabledState": "Enabled"
+        },
+        "dependsOn": []
+      },
+      {
+        "type": "Microsoft.Cdn/profiles/endpoints",
+        "apiVersion": "2021-01-01",
+        "name": "[concat(parameters('frontDoorName'), '/', parameters('frontDoorName'), '-endpoint')]",
+        "location": "Global",
+        "properties": {
+          "originHostHeader": "[parameters('appServiceName')]",
+          "origins": [
+            {
+              "name": "[parameters('appServiceName')]",
+              "properties": {
+                "hostName": "[concat(parameters('appServiceName'), '.azurewebsites.net')]"
+              }
+            }
+          ],
+          "endpointHostHeader": "[concat(parameters('frontDoorName'), '.azurefd.net')]",
+          "enabledState": "Enabled",
+          "isHttpAllowed": false,
+          "isHttpsAllowed": true
+        },
+        "dependsOn": [
+          "[resourceId('Microsoft.Cdn/profiles', parameters('frontDoorName'))]",
+          "[resourceId('Microsoft.Web/sites', parameters('appServiceName'))]"
+        ]
+      }
+    ],
+    "outputs": {
+      "openAiServiceEndpoint": {
+        "type": "string",
+        "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('openAiServiceName'))).properties.privateEndpointConnections[0].privateEndpoint.id]"
+      },
+      "searchServiceEndpoint": {
+        "type": "string",
+        "value": "[reference(resourceId('Microsoft.Search/searchServices', parameters('searchServiceName'))).properties.privateEndpointConnections[0].privateEndpoint.id]"
+      },
+      "storageAccountEndpoint": {
+        "type": "string",
+        "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))).properties.privateEndpointConnections[0].privateEndpoint.id]"
+      },
+      "appServiceEndpoint": {
+        "type": "string",
+        "value": "[reference(resourceId('Microsoft.Web/sites', parameters('appServiceName'))).properties.privateEndpointConnections[0].privateEndpoint.id]"
+      },
+      "frontDoorEndpoint": {
+        "type": "string",
+        "value": "[concat(parameters('frontDoorName'), '.azurefd.net')]"
+      }
+    }
+  }
+  
