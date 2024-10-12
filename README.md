@@ -1,5 +1,7 @@
 # AI-Governance
 
+# AI-Governance
+
 This repository contains Azure Resource Manager (ARM) templates for deploying various Azure services with private endpoints. These templates provide locked down methods of deploying Azure OpenAI installations, ensuring secure and restricted access to the services. The templates are organized into different directories based on the services they configure.
 
 ## Templates
@@ -15,6 +17,9 @@ This template deploys Azure AI Search, Storage, and Web App services with privat
 
 ### [OpenAI-AISearch-Storage-WebApp-AzureFrontDoor-PrivateEndpoint](OpenAI-AISearch-Storage-WebApp-AzureFrontDoor-PrivateEndpoint/OpenAI-AISearch-Storage-WebApp-AzureFrontDoor-PrivateEndpoint.json)
 This template deploys Azure AI Search, Storage, Web App services, and Azure Front Door with private endpoints. It includes configurations for load balancing, endpoint connections, and service names.
+
+### [OpenAI-AiSearch-Storage-WebApp-AFD-Monitoring](OpenAI-AiSearch-Storage-WebApp-AFD-Monitoring/OpenAI-AiSearch-Storage-WebApp-AFD-Monitoring.json)
+This template deploys Azure AI Search, Storage, Web App services, and Azure Front Door with private endpoints, along with a Log Analytics workspace for monitoring. It includes configurations for diagnostic settings to ensure all services send logs and metrics to the Log Analytics workspace.
 
 ## Usage
 
