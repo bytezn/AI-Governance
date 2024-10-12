@@ -4,7 +4,7 @@
 
 This repository contains Azure Resource Manager (ARM) templates for deploying various Azure services with private endpoints. These templates provide locked down methods of deploying Azure OpenAI installations, ensuring secure and restricted access to the services. The templates are organized into different directories based on the services they configure.
 
-## Templates
+## AI Templates
 
 ### [OpenAI-PrivateEndpoints](OpenAI-PrivateEndpoints/AzureOpenAI_PrivateEndpoint.json)
 This template deploys an Azure OpenAI service with a private endpoint. It includes configurations for network access restrictions and system-assigned identity.
